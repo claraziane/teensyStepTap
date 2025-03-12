@@ -66,6 +66,7 @@ char COND11[12] = "COND11.TXT";
 char COND12[12] = "COND12.TXT";
 char COND13[12] = "COND13.TXT";
 char COND14[12] = "COND14.TXT";
+char CALIB[12] = "CALIB.TXT";
 
 // constants won't change. They're used here to set pin numbers:
 const int buttonPin = 4;         // the number of the pushbutton pin. Teensy 3.2 pin.
@@ -286,6 +287,26 @@ void loop() {
   current_t = millis(); // get current time (in ms)
 
   if (active) { // active True or False comes from checkStartStopButton()
+<<<<<<< HEAD
+    switch (state){
+      case 0:
+      calibrateFSR();
+      if (current_t > prev_t) {
+        
+      }
+      break;
+      case 1:  
+      if (current_t > prev_t){
+        if (trialStartTime == 0){
+          trialStartTime = current_t;
+//          tap_onset_threshold    = 1750;
+//          tap_offset_threshold   = 500;
+          min_tap_on_duration    = 350;
+          min_tap_off_duration   = 300;
+        }
+        // Here is where we put the choices for each Condition
+        blinkLED();
+=======
     switch (state) {
       case 1: //noneWalkST
         if (current_t > prev_t) {
@@ -298,6 +319,7 @@ void loop() {
           }
           // Here is where we put the choices for each Condition
           blinkLED();
+>>>>>>> 1f8b7885d9bd3240b22e4a809b6d23a031e1a378
 
           updateCountdown();
           // Only proceed with main activity after countdown finishes
