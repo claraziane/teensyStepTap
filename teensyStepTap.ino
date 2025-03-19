@@ -91,7 +91,8 @@ const long interval = 1000;         // interval at which to blink (milliseconds)
 unsigned long previousTrialMillis = 0;
 unsigned long trialStartTime = 0;
 //const long trialInterval = 60000;  // 1 minute for now
-const long trialInterval = 160000;  // 2.5 mins + 10 sec minute for now
+const long trialInterval = 180000;  // 2.5 mins + 10 sec minute for now
+const long conditionInterval = 150000; // Actual condition time
 
 // the following variables are unsigned longs because the time, measured in
 // milliseconds, will quickly become a bigger number than can be stored in an int.
@@ -289,34 +290,31 @@ void loop() {
   if (active) { // active True or False comes from checkStartStopButton()
 
     switch (state){
-      case 0:
-      calibrateFSR();
-      if (current_t > prev_t) {
-        
-      }
-      break;
+//      case 0:
+//      calibrateFSR();
+//      if (current_t > prev_t) {
+//        
+//      }
+//      break;
 
       case 1: //noneWalkST
         if (current_t > prev_t) {
           if (trialStartTime == 0) {
             trialStartTime = current_t;
-            tap_onset_threshold    = 175;
-            tap_offset_threshold   = 50;
-            min_tap_on_duration    = 700;
+            tap_onset_threshold    = 400;
+            tap_offset_threshold   = 200;
+            min_tap_on_duration    = 500;
             min_tap_off_duration   = 300;
           }
           // Here is where we put the choices for each Condition
           blinkLED();
 
-          updateCountdown();
-          // Only proceed with main activity after countdown finishes
-          if (!countdownActive) {
-            readFSR(STEP);
-          }
+          readFSR(STEP);
+
           // End of choices for each Condition
           // Here we need to calculate BPM
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
             // Here we calculate BPM.
             //          Serial.println(responseArray[msg_number_array][2]);
             //          Serial.println(responseArray[1][2]);
@@ -339,16 +337,13 @@ void loop() {
             digitalWrite(greenLED, HIGH);
           }
 
-          updateCountdown();
-          // Here is where we put the choices for each Condition
-          if (!countdownActive) {
-            readFSR(TAP);
-          }
+          readFSR(TAP);
+            
           // End of choices for each Condition
 
           // Here we need to calculate BPM
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
             // Here we calculate BPM.
             BPM = round((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10));
             Serial.print("BPM: "); Serial.println(BPM);
@@ -366,11 +361,13 @@ void loop() {
           if (trialStartTime == 0) {
             trialStartTime = current_t;
           }
+          
           // Here is where we put the choices for each Condition
           blinkLED();
+          
           // End of choices for each Condition
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
             closeCondition(COND3);
           }
         }
@@ -383,15 +380,17 @@ void loop() {
           // Here is where we put the choices for each Condition
           blinkLED();
 
-          updateCountdown();
-          // Only proceed with main activity after countdown finishes
-          if (!countdownActive) {
-            readFSR(STEP);
-          }
+          readFSR(STEP);
+
           // End of choices for each Condition
 
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
+            Serial.print("BPM: "); Serial.println(BPM);
+            char msg[50];
+            sprintf(msg, "BPM is %d\n", BPM);
+            Serial.print("msg: "); Serial.println(msg);
+            write_to_sdCard(msg, COND4); delay(50);
             closeCondition(COND4);
           }
         }
@@ -403,15 +402,18 @@ void loop() {
             digitalWrite(greenLED, HIGH);
           }
           // Here is where we put the choices for each Condition
-          updateCountdown();
-          // Only proceed with main activity after countdown finishes
-          if (!countdownActive) {
-            readFSR(TAP);
-          }
+
+          readFSR(TAP);
+
           recordAudio(); //maybe the LED needs just to stay ON.
           // End of choices for each Condition
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
+            Serial.print("BPM: "); Serial.println(BPM);
+            char msg[50];
+            sprintf(msg, "BPM is %d\n", BPM);
+            Serial.print("msg: "); Serial.println(msg);
+            write_to_sdCard(msg, COND5); delay(50);
             closeCondition(COND5);
           }
         }
@@ -434,9 +436,10 @@ void loop() {
           // Here is where we put the choices for each Condition
           blinkLED();
           playOddball(buf);
+          
           // End of choices for each Condition
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
             closeCondition(COND6);
             appendBufToSD(COND6);
           }
@@ -458,16 +461,22 @@ void loop() {
           }
           // Here is where we put the choices for each Condition
           blinkLED();
+          readFSR(STEP);
+          
           updateCountdown();
           // Only proceed with main activity after countdown finishes
           if (!countdownActive) {
-            readFSR(STEP);
             playOddball(buf); //maybe the LED needs just to stay ON.
           }
           
           // End of choices for each Condition
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
+            Serial.print("BPM: "); Serial.println(BPM);
+            char msg[50];
+            sprintf(msg, "BPM is %d\n", BPM);
+            Serial.print("msg: "); Serial.println(msg);
+            write_to_sdCard(msg, COND7); delay(50);
             closeCondition(COND7);
             appendBufToSD(COND7);
           }
@@ -488,22 +497,30 @@ void loop() {
             Serial.print("metronome_interval: "); Serial.println(metronome_interval);
             digitalWrite(greenLED, HIGH);
           }
+          
           // Here is where we put the choices for each Condition
+          readFSR(TAP);
+
           updateCountdown();
           // Only proceed with main activity after countdown finishes
           if (!countdownActive) {
-            readFSR(TAP);
             playOddball(buf); //maybe the LED needs just to stay ON.
-
           }
+          
           // End of choices for each Condition
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
+            Serial.print("BPM: "); Serial.println(BPM);
+            char msg[50];
+            sprintf(msg, "BPM is %d\n", BPM);
+            Serial.print("msg: "); Serial.println(msg);
+            write_to_sdCard(msg, COND8); delay(50);
             closeCondition(COND8);
             appendBufToSD(COND8);
           }
         }
         break;
+        
       case 9:
         if (current_t > prev_t) {
           if (trialStartTime == 0) {
@@ -513,19 +530,23 @@ void loop() {
           }
           // Here is where we put the choices for each Condition
           blinkLED();
-          updateCountdown();
-          // Only proceed with main activity after countdown finishes
-          if (!countdownActive) {
-            readFSR(STEP);
-          }
+          
+          readFSR(STEP);
+
           playPureTone(); //maybe the LED needs just to stay ON.
           // End of choices for each Condition
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
+            Serial.print("BPM: "); Serial.println(BPM);
+            char msg[50];
+            sprintf(msg, "BPM is %d\n", BPM);
+            Serial.print("msg: "); Serial.println(msg);
+            write_to_sdCard(msg, COND9); delay(50);
             closeCondition(COND9);
           }
         }
         break;
+        
       case 10:
         if (current_t > prev_t) {
           if (trialStartTime == 0) {
@@ -535,15 +556,18 @@ void loop() {
             digitalWrite(greenLED, HIGH);
           }
           // Here is where we put the choices for each Condition
-          updateCountdown();
-          // Only proceed with main activity after countdown finishes
-          if (!countdownActive) {
-            readFSR(TAP);
-          }
+
+          readFSR(TAP);
+
           playPureTone(); //maybe the LED needs just to stay ON.
           // End of choices for each Condition
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
+            Serial.print("BPM: "); Serial.println(BPM);
+            char msg[50];
+            sprintf(msg, "BPM is %d\n", BPM);
+            Serial.print("msg: "); Serial.println(msg);
+            write_to_sdCard(msg, COND10); delay(50);           
             closeCondition(COND10);
           }
         }
@@ -557,16 +581,19 @@ void loop() {
           }
           // Here is where we put the choices for each Condition
           blinkLED();
-          updateCountdown();
-          // Only proceed with main activity after countdown finishes
-          if (!countdownActive) {
-            readFSR(STEP);
-          }
+
+          readFSR(STEP);
+
           playPureTone();
           recordAudio(); //maybe the LED needs just to stay ON.
           // End of choices for each Condition
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
+            Serial.print("BPM: "); Serial.println(BPM);
+            char msg[50];
+            sprintf(msg, "BPM is %d\n", BPM);
+            Serial.print("msg: "); Serial.println(msg);
+            write_to_sdCard(msg, COND11); delay(50);            
             closeCondition(COND11);
           }
         }
@@ -579,17 +606,19 @@ void loop() {
             Serial.print("metronome_interval: "); Serial.println(metronome_interval);
             digitalWrite(greenLED, HIGH);
           }
-          // Here is where we put the choices for each Condition
-          updateCountdown();
-          // Only proceed with main activity after countdown finishes
-          if (!countdownActive) {
-            readFSR(TAP);
-          }
+
+          readFSR(TAP);
+
           playPureTone(); //maybe the LED needs just to stay ON.
           recordAudio();
           // End of choices for each Condition
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
+            Serial.print("BPM: "); Serial.println(BPM);
+            char msg[50];
+            sprintf(msg, "BPM is %d\n", BPM);
+            Serial.print("msg: "); Serial.println(msg);
+            write_to_sdCard(msg, COND12); delay(50);            
             closeCondition(COND12);
           }
         }
@@ -610,16 +639,19 @@ void loop() {
           }
           // Here is where we put the choices for each Condition
           blinkLED();
-          updateCountdown();
-          // Only proceed with main activity after countdown finishes
-          if (!countdownActive) {
-            readFSR(STEP);
-          }
+
+          readFSR(STEP);
+
           playOddball(buf);
           recordAudio(); //maybe the LED needs just to stay ON.
           // End of choices for each Condition
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
+            Serial.print("BPM: "); Serial.println(BPM);
+            char msg[50];
+            sprintf(msg, "BPM is %d\n", BPM);
+            Serial.print("msg: "); Serial.println(msg);
+            write_to_sdCard(msg, COND13); delay(50);           
             closeCondition(COND13);
             appendBufToSD(COND13);
           }
@@ -641,15 +673,18 @@ void loop() {
             digitalWrite(greenLED, HIGH);
           }
           // Here is where we put the choices for each Condition
-          updateCountdown();
-          // Only proceed with main activity after countdown finishes
-          if (!countdownActive) {
-            readFSR(TAP);
-          }
+
+          readFSR(TAP);
+
           playOddball(buf); //maybe the LED needs just to stay ON.
           // End of choices for each Condition
           prev_t = current_t;
-          if (current_t - trialStartTime >= trialInterval + 100) {
+          if (current_t - trialStartTime >= conditionInterval) {
+            Serial.print("BPM: "); Serial.println(BPM);
+            char msg[50];
+            sprintf(msg, "BPM is %d\n", BPM);
+            Serial.print("msg: "); Serial.println(msg);
+            write_to_sdCard(msg, COND14); delay(50);           
             closeCondition(COND14);
             appendBufToSD(COND14);
           }
@@ -882,14 +917,18 @@ void send_tap_to_serial(int type) {
 void closeCondition(char *filename) {
   Serial.println("Active is false");
   active = false;
+
+  char msg[50];
+  sprintf(msg, "Trial start time is %lu\n", trialStartTime);
+  write_to_sdCard(msg, filename); delay(50);
   trialStartTime = 0;
   next_metronome_t = 0;
   metronome_clicks_played = 0;
   digitalWrite(greenLED, LOW);
-  write_responseArray_to_sdCard(filename);
+  write_responseArray_to_sdCard(filename); delay(50);
   msg_number_array = 0;
   msg_number = 0;
-  resetArray();
+  resetArray(); delay(50);
   countdownSeconds = 10;  // Tracks the last time we updated
   countdownActive = true;  // Flag to control countdown state
   Serial.println("We just reset/closed the Condition parameters");
@@ -898,7 +937,7 @@ void closeCondition(char *filename) {
 // New function to append buf to SD card
 void appendBufToSD(char *filename) {
   // Buffer to hold the string representation of buf
-  char msg[256]; // Adjust size if nSnds grows large
+  char msg[4096]; // Adjust size if nSnds grows large
   int offset = 0;
 
   // Convert buf to a comma-separated string
