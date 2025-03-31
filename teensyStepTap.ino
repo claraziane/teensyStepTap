@@ -52,21 +52,35 @@ uint8_t state = -1;
 // Definitions for the SD card
 const int chipSelect = 10;
 File myFile; // probably we just need one definition as each Condition is independent from the others.
-char COND1[12] = "COND01.TXT";
-char COND2[12] = "COND02.TXT";
-char COND3[12] = "COND03.TXT";
-char COND4[12] = "COND04.TXT";
-char COND5[12] = "COND05.TXT";
-char COND6[12] = "COND06.TXT";
-char COND7[12] = "COND07.TXT";
-char COND8[12] = "COND08.TXT";
-char COND9[12] = "COND09.TXT";
-char COND10[12] = "COND10.TXT";
-char COND11[12] = "COND11.TXT";
-char COND12[12] = "COND12.TXT";
-char COND13[12] = "COND13.TXT";
-char COND14[12] = "COND14.TXT";
+//char COND1[12] = "COND01.TXT";
+//char COND2[12] = "COND02.TXT";
+//char COND3[12] = "COND03.TXT";
+//char COND4[12] = "COND04.TXT";
+//char COND5[12] = "COND05.TXT";
+//char COND6[12] = "COND06.TXT";
+//char COND7[12] = "COND07.TXT";
+//char COND8[12] = "COND08.TXT";
+//char COND9[12] = "COND09.TXT";
+//char COND10[12] = "COND10.TXT";
+//char COND11[12] = "COND11.TXT";
+//char COND12[12] = "COND12.TXT";
+//char COND13[12] = "COND13.TXT";
+//char COND14[12] = "COND14.TXT";
 char CALIB[12] = "CALIB.TXT";
+char COND1[15] = "noneWalkST.TXT";
+char COND2[14] = "noneTapST.TXT";
+char COND3[16] = "noneRestSUB.TXT";
+char COND4[16] = "noneWalkSUB.TXT";
+char COND5[15] = "noneTapSUB.TXT";
+char COND6[16] = "stimRestODD.TXT";
+char COND7[16] = "stimWalkODD.TXT";
+char COND8[15] = "stimTapODD.TXT";
+char COND9[15] = "syncWalkST.TXT";
+char COND10[14] = "syncTapST.TXT";
+char COND11[16] = "syncWalkSUB.TXT";
+char COND12[15] = "syncTapSUB.TXT";
+char COND13[16] = "syncWalkODD.TXT";
+char COND14[15] = "syncTapODD.TXT";
 
 // constants won't change. They're used here to set pin numbers:
 const int buttonPin = 4;         // the number of the pushbutton pin. Teensy 3.2 pin.
@@ -90,9 +104,9 @@ const long interval = 1000;         // interval at which to blink (milliseconds)
 // Main Condition interval
 unsigned long previousTrialMillis = 0;
 unsigned long trialStartTime = 0;
-//const long trialInterval = 60000;  // 1 minute for now
+//const long trialInterval = 30000;  // 1 minute for now
 const long trialInterval = 180000;  // 2.5 mins + 10 sec minute for now
-const long conditionInterval = 150000; // Actual condition time
+const long conditionInterval = 160000; // Actual condition time
 
 // the following variables are unsigned longs because the time, measured in
 // milliseconds, will quickly become a bigger number than can be stored in an int.
@@ -108,11 +122,14 @@ boolean prev_active = false; // Whether we were active on the previous loop iter
 
 // For interpreting taps
 // All these definitions come from teensytap - FVV
-int tap_onset_threshold    = 50; // the FSR reading threshold necessary to flag a tap onset
-int tap_offset_threshold   = 20; // the FSR reading threshold necessary to flag a tap offset
+int tap_onset_threshold    = 10; // the FSR reading threshold necessary to flag a tap onset
+int tap_offset_threshold   = 5; // the FSR reading threshold necessary to flag a tap offset
 int min_tap_on_duration    = 20; // the minimum duration of a tap (in ms), this prevents double taps
 int min_tap_off_duration   = 40; // the minimum time between offset of one tap and the onset of the next taps, again this prevents double taps
-
+//int tap_onset_threshold    = 100;
+//int tap_offset_threshold   = 75;
+//int min_tap_on_duration    = 500;
+//int min_tap_off_duration   = 300;
 
 int tap_phase = 0; // The current tap phase, 0 = tap off (i.e. we are in the inter-tap-interval), 1 = tap on (we are within a tap)
 
@@ -145,8 +162,8 @@ int metronome_clicks_played = 0; // how many metronome clicks we have played (us
 */
 
 int msg_number = 0; // keep track of how many messages we have sent over the serial interface (to be able to track down possible missing messages)
-//int BPM = 120;     // calculated tap BPM. Value to be defined by Condition 2.
-int BPM = 96;    // calculated cadence. Value to be defined by Condition 1.
+//int  = 120;     // calculated tap . Value to be defined by Condition 2.
+int BPM = 125;    // calculated cadence. Value to be defined by Condition 1.
 double totalNumberOfBeats = 0;
 int totalNumberOfDeviants = 0;
 
@@ -289,20 +306,20 @@ void loop() {
 
   if (active) { // active True or False comes from checkStartStopButton()
 
-    switch (state){
-//      case 0:
-//      calibrateFSR();
-//      if (current_t > prev_t) {
-//        
-//      }
-//      break;
+    switch (state) {
+      //      case 0:
+      //      calibrateFSR();
+      //      if (current_t > prev_t) {
+      //
+      //      }
+      //      break;
 
       case 1: //noneWalkST
         if (current_t > prev_t) {
           if (trialStartTime == 0) {
             trialStartTime = current_t;
-            tap_onset_threshold    = 400;
-            tap_offset_threshold   = 200;
+            tap_onset_threshold    = 100;
+            tap_offset_threshold   = 75;
             min_tap_on_duration    = 500;
             min_tap_off_duration   = 300;
           }
@@ -319,7 +336,7 @@ void loop() {
             //          Serial.println(responseArray[msg_number_array][2]);
             //          Serial.println(responseArray[1][2]);
             //          Serial.println(msg_number_array);
-            BPM = 2 * round((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10));
+            BPM = round(2 * ((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10)));
             Serial.print("BPM: "); Serial.println(BPM);
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
@@ -338,7 +355,7 @@ void loop() {
           }
 
           readFSR(TAP);
-            
+
           // End of choices for each Condition
 
           // Here we need to calculate BPM
@@ -361,10 +378,9 @@ void loop() {
           if (trialStartTime == 0) {
             trialStartTime = current_t;
           }
-          
-          // Here is where we put the choices for each Condition
+
           blinkLED();
-          
+
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
@@ -436,10 +452,15 @@ void loop() {
           // Here is where we put the choices for each Condition
           blinkLED();
           playOddball(buf);
-          
+
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
+            Serial.print("BPM: "); Serial.println(BPM);
+            char msg[50];
+            sprintf(msg, "BPM is %d\n", BPM);
+            Serial.print("msg: "); Serial.println(msg);
+            write_to_sdCard(msg, COND6); delay(50);
             closeCondition(COND6);
             appendBufToSD(COND6);
           }
@@ -462,13 +483,13 @@ void loop() {
           // Here is where we put the choices for each Condition
           blinkLED();
           readFSR(STEP);
-          
+
           updateCountdown();
           // Only proceed with main activity after countdown finishes
           if (!countdownActive) {
             playOddball(buf); //maybe the LED needs just to stay ON.
           }
-          
+
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
@@ -497,7 +518,7 @@ void loop() {
             Serial.print("metronome_interval: "); Serial.println(metronome_interval);
             digitalWrite(greenLED, HIGH);
           }
-          
+
           // Here is where we put the choices for each Condition
           readFSR(TAP);
 
@@ -506,7 +527,7 @@ void loop() {
           if (!countdownActive) {
             playOddball(buf); //maybe the LED needs just to stay ON.
           }
-          
+
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
@@ -520,7 +541,7 @@ void loop() {
           }
         }
         break;
-        
+
       case 9:
         if (current_t > prev_t) {
           if (trialStartTime == 0) {
@@ -530,7 +551,7 @@ void loop() {
           }
           // Here is where we put the choices for each Condition
           blinkLED();
-          
+
           readFSR(STEP);
 
           playPureTone(); //maybe the LED needs just to stay ON.
@@ -546,7 +567,7 @@ void loop() {
           }
         }
         break;
-        
+
       case 10:
         if (current_t > prev_t) {
           if (trialStartTime == 0) {
@@ -567,7 +588,7 @@ void loop() {
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
             Serial.print("msg: "); Serial.println(msg);
-            write_to_sdCard(msg, COND10); delay(50);           
+            write_to_sdCard(msg, COND10); delay(50);
             closeCondition(COND10);
           }
         }
@@ -593,7 +614,7 @@ void loop() {
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
             Serial.print("msg: "); Serial.println(msg);
-            write_to_sdCard(msg, COND11); delay(50);            
+            write_to_sdCard(msg, COND11); delay(50);
             closeCondition(COND11);
           }
         }
@@ -618,7 +639,7 @@ void loop() {
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
             Serial.print("msg: "); Serial.println(msg);
-            write_to_sdCard(msg, COND12); delay(50);            
+            write_to_sdCard(msg, COND12); delay(50);
             closeCondition(COND12);
           }
         }
@@ -651,7 +672,7 @@ void loop() {
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
             Serial.print("msg: "); Serial.println(msg);
-            write_to_sdCard(msg, COND13); delay(50);           
+            write_to_sdCard(msg, COND13); delay(50);
             closeCondition(COND13);
             appendBufToSD(COND13);
           }
@@ -684,7 +705,7 @@ void loop() {
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
             Serial.print("msg: "); Serial.println(msg);
-            write_to_sdCard(msg, COND14); delay(50);           
+            write_to_sdCard(msg, COND14); delay(50);
             closeCondition(COND14);
             appendBufToSD(COND14);
           }
