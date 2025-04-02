@@ -52,20 +52,6 @@ uint8_t state = -1;
 // Definitions for the SD card
 const int chipSelect = 10;
 File myFile; // probably we just need one definition as each Condition is independent from the others.
-//char COND1[12] = "COND01.TXT";
-//char COND2[12] = "COND02.TXT";
-//char COND3[12] = "COND03.TXT";
-//char COND4[12] = "COND04.TXT";
-//char COND5[12] = "COND05.TXT";
-//char COND6[12] = "COND06.TXT";
-//char COND7[12] = "COND07.TXT";
-//char COND8[12] = "COND08.TXT";
-//char COND9[12] = "COND09.TXT";
-//char COND10[12] = "COND10.TXT";
-//char COND11[12] = "COND11.TXT";
-//char COND12[12] = "COND12.TXT";
-//char COND13[12] = "COND13.TXT";
-//char COND14[12] = "COND14.TXT";
 char CALIB[12] = "CALIB.TXT";
 char COND1[15] = "noneWalkST.TXT";
 char COND2[14] = "noneTapST.TXT";
@@ -105,6 +91,8 @@ const long interval = 1000;         // interval at which to blink (milliseconds)
 unsigned long previousTrialMillis = 0;
 unsigned long trialStartTime = 0;
 //const long trialInterval = 30000;  // 1 minute for now
+//const long conditionInterval = 30000; // Actual condition time
+
 const long trialInterval = 180000;  // 2.5 mins + 10 sec minute for now
 const long conditionInterval = 160000; // Actual condition time
 
@@ -126,8 +114,8 @@ int tap_onset_threshold    = 10; // the FSR reading threshold necessary to flag 
 int tap_offset_threshold   = 5; // the FSR reading threshold necessary to flag a tap offset
 int min_tap_on_duration    = 20; // the minimum duration of a tap (in ms), this prevents double taps
 int min_tap_off_duration   = 40; // the minimum time between offset of one tap and the onset of the next taps, again this prevents double taps
-//int tap_onset_threshold    = 100;
-//int tap_offset_threshold   = 75;
+//int tap_onset_threshold    = 350;
+//int tap_offset_threshold   = 175;
 //int min_tap_on_duration    = 500;
 //int min_tap_off_duration   = 300;
 
@@ -164,6 +152,7 @@ int metronome_clicks_played = 0; // how many metronome clicks we have played (us
 int msg_number = 0; // keep track of how many messages we have sent over the serial interface (to be able to track down possible missing messages)
 //int  = 120;     // calculated tap . Value to be defined by Condition 2.
 int BPM = 125;    // calculated cadence. Value to be defined by Condition 1.
+int Cadence = 1;
 double totalNumberOfBeats = 0;
 int totalNumberOfDeviants = 0;
 
@@ -307,19 +296,22 @@ void loop() {
   if (active) { // active True or False comes from checkStartStopButton()
 
     switch (state) {
-      //      case 0:
-      //      calibrateFSR();
-      //      if (current_t > prev_t) {
+      //     case 0: //FSR calibration
+      //            calibrateFSR();
+      //            if (current_t > prev_t) {
       //
-      //      }
-      //      break;
+      //            }
+      //
+      //          blinkLED();
+      //
+      //            break;
 
       case 1: //noneWalkST
         if (current_t > prev_t) {
           if (trialStartTime == 0) {
             trialStartTime = current_t;
-            tap_onset_threshold    = 100;
-            tap_offset_threshold   = 75;
+            tap_onset_threshold    = 350;
+            tap_offset_threshold   = 175;
             min_tap_on_duration    = 500;
             min_tap_off_duration   = 300;
           }
@@ -344,6 +336,10 @@ void loop() {
             write_to_sdCard(msg, COND1); delay(50);
             //
             closeCondition(COND1);
+
+            // Display cadence
+            tm.clearDisplay();
+            tm.displayNum(BPM);
           }
         }
         break;
@@ -370,6 +366,10 @@ void loop() {
             write_to_sdCard(msg, COND2); delay(50);
             //
             closeCondition(COND2);
+
+            // Display tapping rate
+            tm.clearDisplay();
+            tm.displayNum(BPM);
           }
         }
         break;
@@ -377,9 +377,8 @@ void loop() {
         if (current_t > prev_t) {
           if (trialStartTime == 0) {
             trialStartTime = current_t;
+            digitalWrite(greenLED, HIGH);
           }
-
-          blinkLED();
 
           // End of choices for each Condition
           prev_t = current_t;
@@ -402,12 +401,17 @@ void loop() {
 
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
+            Cadence = round(2 * ((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10)));
             Serial.print("BPM: "); Serial.println(BPM);
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
             Serial.print("msg: "); Serial.println(msg);
             write_to_sdCard(msg, COND4); delay(50);
             closeCondition(COND4);
+
+            // Display cadence
+            tm.clearDisplay();
+            tm.displayNum(Cadence);
           }
         }
         break;
@@ -425,12 +429,18 @@ void loop() {
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
+            Cadence = round((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10));
             Serial.print("BPM: "); Serial.println(BPM);
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
             Serial.print("msg: "); Serial.println(msg);
             write_to_sdCard(msg, COND5); delay(50);
             closeCondition(COND5);
+
+            // Display cadence
+            tm.clearDisplay();
+            tm.displayNum(Cadence);
+
           }
         }
         break;
@@ -447,10 +457,10 @@ void loop() {
             nSnds = totalNumberOfBeats;
             metronome_interval = round(60E3 / BPM);
             Serial.print("metronome_interval: "); Serial.println(metronome_interval);
+            digitalWrite(greenLED, HIGH);
           }
 
           // Here is where we put the choices for each Condition
-          blinkLED();
           playOddball(buf);
 
           // End of choices for each Condition
@@ -493,6 +503,7 @@ void loop() {
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
+            Cadence = round(2 * ((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10)));
             Serial.print("BPM: "); Serial.println(BPM);
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
@@ -500,6 +511,10 @@ void loop() {
             write_to_sdCard(msg, COND7); delay(50);
             closeCondition(COND7);
             appendBufToSD(COND7);
+
+            // Display cadence
+            tm.clearDisplay();
+            tm.displayNum(Cadence);
           }
         }
         break;
@@ -531,6 +546,7 @@ void loop() {
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
+            Cadence = round((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10));
             Serial.print("BPM: "); Serial.println(BPM);
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
@@ -538,6 +554,10 @@ void loop() {
             write_to_sdCard(msg, COND8); delay(50);
             closeCondition(COND8);
             appendBufToSD(COND8);
+
+            // Display cadence
+            tm.clearDisplay();
+            tm.displayNum(Cadence);
           }
         }
         break;
@@ -558,12 +578,17 @@ void loop() {
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
+            Cadence = round(2 * ((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10)));
             Serial.print("BPM: "); Serial.println(BPM);
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
             Serial.print("msg: "); Serial.println(msg);
             write_to_sdCard(msg, COND9); delay(50);
             closeCondition(COND9);
+
+            // Display cadence
+            tm.clearDisplay();
+            tm.displayNum(Cadence);
           }
         }
         break;
@@ -584,12 +609,17 @@ void loop() {
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
+            Cadence = round((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10));
             Serial.print("BPM: "); Serial.println(BPM);
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
             Serial.print("msg: "); Serial.println(msg);
             write_to_sdCard(msg, COND10); delay(50);
             closeCondition(COND10);
+
+            // Display cadence
+            tm.clearDisplay();
+            tm.displayNum(Cadence);
           }
         }
         break;
@@ -610,12 +640,17 @@ void loop() {
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
+            Cadence = round(2 * ((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10)));
             Serial.print("BPM: "); Serial.println(BPM);
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
             Serial.print("msg: "); Serial.println(msg);
             write_to_sdCard(msg, COND11); delay(50);
             closeCondition(COND11);
+
+            // Display cadence
+            tm.clearDisplay();
+            tm.displayNum(Cadence);
           }
         }
         break;
@@ -635,12 +670,17 @@ void loop() {
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
+            Cadence = round((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10));
             Serial.print("BPM: "); Serial.println(BPM);
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
             Serial.print("msg: "); Serial.println(msg);
             write_to_sdCard(msg, COND12); delay(50);
             closeCondition(COND12);
+
+            // Display cadence
+            tm.clearDisplay();
+            tm.displayNum(Cadence);
           }
         }
         break;
@@ -668,6 +708,7 @@ void loop() {
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
+            Cadence = round(2 * ((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10)));
             Serial.print("BPM: "); Serial.println(BPM);
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
@@ -675,6 +716,10 @@ void loop() {
             write_to_sdCard(msg, COND13); delay(50);
             closeCondition(COND13);
             appendBufToSD(COND13);
+
+            // Display cadence
+            tm.clearDisplay();
+            tm.displayNum(Cadence);
           }
         }
         break;
@@ -701,6 +746,7 @@ void loop() {
           // End of choices for each Condition
           prev_t = current_t;
           if (current_t - trialStartTime >= conditionInterval) {
+            Cadence = round((60E3 / (responseArray[msg_number_array][2] - 1 - responseArray[10][2])) * (msg_number_array - 10));
             Serial.print("BPM: "); Serial.println(BPM);
             char msg[50];
             sprintf(msg, "BPM is %d\n", BPM);
@@ -708,6 +754,10 @@ void loop() {
             write_to_sdCard(msg, COND14); delay(50);
             closeCondition(COND14);
             appendBufToSD(COND14);
+
+            // Display cadence
+            tm.clearDisplay();
+            tm.displayNum(Cadence);
           }
         }
         break;
